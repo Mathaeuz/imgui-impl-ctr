@@ -1,0 +1,5 @@
+/build
+/imgui/*
+*.3dsx
+*.elf
+*.smdh
