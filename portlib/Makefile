@@ -15,11 +15,11 @@ include $(DEVKITARM)/3ds_rules
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
 #---------------------------------------------------------------------------------
-TARGET		:=	$(shell basename $(CURDIR))
+TARGET		:=	$(shell basename $(dir $(CURDIR)))
 BUILD		:=	build
-SOURCES		:=	../../impl
+SOURCES		:=	../impl ../example/imgui
 DATA		:=	data
-INCLUDES	:=	../../impl
+INCLUDES	:=	../impl ../example/imgui
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -30,7 +30,7 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations \
 			-ffunction-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -D__3DS__
+CFLAGS	+=	$(INCLUDE) -D__3DS__ -DIMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
@@ -40,7 +40,6 @@ ASFLAGS	:=	-g $(ARCH)
 # include and lib
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(CTRULIB)
-IMGUI := ../../example/imgui
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -86,24 +85,25 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			$(foreach dir,$(IMGUI),-I$(CURDIR)/$(dir)) \
 			-I$(CURDIR)/$(BUILD)
 
 HFILES := $(HFILES) $(SHADER_HFILES)
 
-.PHONY: $(BUILD) clean all
+.PHONY: $(BUILD) clean all copy-includes
 
 #---------------------------------------------------------------------------------
-all: $(BUILD)
+all: $(BUILD) copy-includes
 
 lib:
 	@[ -d $@ ] || mkdir -p $@
+
+copy-includes:
+	@mkdir -p include/
+	@cp $(foreach dir,$(INCLUDES),$(wildcard $(dir)/*.h)) ./include
 	
 $(BUILD): lib
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
-	@mkdir -p include/
-	@$(foreach dir,$(INCLUDES),$(foreach header,$(wildcard $(dir)/*.h),cp $(header) include/))
 
 #---------------------------------------------------------------------------------
 clean:
